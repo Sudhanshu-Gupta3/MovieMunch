@@ -17,7 +17,7 @@ namespace MovieMunch.Registration
         }
 
         [HttpPost]
-        [Route("registration")]
+        [Route("")]
         public string registration(RegistrationModel registration)
         {
             string connectionString = _configuration.GetConnectionString("mom");
@@ -33,6 +33,7 @@ namespace MovieMunch.Registration
                     cmd.Parameters.AddWithValue("@UserName", registration.Username);
                     cmd.Parameters.AddWithValue("@Password", registration.Password);
                     cmd.Parameters.AddWithValue("@Email", registration.Email);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", registration.PhoneNumber);
                     cmd.Parameters.AddWithValue("@IsActive", registration.IsActive);
 
                     try
@@ -56,26 +57,54 @@ namespace MovieMunch.Registration
                 return "Failed to insert data";
             }
         }
+        //[HttpPost]
+        //[Route("login")]
+        //public string login(RegistrationModel registration)
+        //{
+        //    string connectionString = _configuration.GetConnectionString("mom");
+        //    SqlConnection con = new SqlConnection(connectionString);
+        //    SqlDataAdapter da = new SqlDataAdapter("Select * from Registration where Email = '"+registration.Email+"' and Password = '"+registration.Password+"'",con);
+
+        //    DataTable dt = new DataTable();
+        //    da.Fill(dt);
+
+        //    if(dt.Rows.Count > 0)
+        //    {
+        //        return "Valid User";
+        //    }
+        //    else
+        //    {
+        //        return "Invalid User";
+        //    }
+
+        //}
+
         [HttpPost]
         [Route("login")]
         public string login(RegistrationModel registration)
         {
             string connectionString = _configuration.GetConnectionString("mom");
-            SqlConnection con = new SqlConnection(connectionString);
-            SqlDataAdapter da = new SqlDataAdapter("Select * from Registration where Email = '"+registration.Email+"' and Password = '"+registration.Password+"'",con);
-           
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-
-            if(dt.Rows.Count > 0)
+            using (SqlConnection con = new SqlConnection(connectionString))
             {
-                return "Valid User";
-            }
-            else
-            {
-                return "Invalid User";
-            }
+                string query = string.IsNullOrEmpty(registration.PhoneNumber)
+                    ? "SELECT * FROM Registration WHERE Email = @Email AND Password = @Password"
+                    : "SELECT * FROM Registration WHERE PhoneNumber = @PhoneNumber AND Password = @Password";
 
+                SqlCommand cmd = new SqlCommand(query, con);
+
+                if (string.IsNullOrEmpty(registration.PhoneNumber))
+                    cmd.Parameters.AddWithValue("@Email", registration.Email);
+                else
+                    cmd.Parameters.AddWithValue("@PhoneNumber", registration.PhoneNumber);
+
+                cmd.Parameters.AddWithValue("@Password", registration.Password);
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                return dt.Rows.Count > 0 ? "Valid User" : "Invalid User";
+            }
         }
 
     }
