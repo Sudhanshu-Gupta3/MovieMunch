@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovieMunch", "MovieMunch.csproj", "{DEA58C2B-80E9-4957-9D99-3A402447A139}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DEA58C2B-80E9-4957-9D99-3A402447A139}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEA58C2B-80E9-4957-9D99-3A402447A139}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEA58C2B-80E9-4957-9D99-3A402447A139}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEA58C2B-80E9-4957-9D99-3A402447A139}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A934C6B-8268-4915-B419-A849ED411026}
+	EndGlobalSection
+EndGlobal
