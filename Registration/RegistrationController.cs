@@ -67,28 +67,28 @@ namespace MovieMunch.Registration
 
         [HttpPost]
         [Route("login")]
-        public IActionResult Login(RegistrationModel registration)
+        public IActionResult Login(LoginModel credentials)
         {
             string connectionString = _configuration.GetConnectionString("mom");
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                string query = !string.IsNullOrEmpty(registration.PhoneNumber)
+                string query = !string.IsNullOrEmpty(credentials.PhoneNumber)
                     ? "SELECT Password FROM Registration WHERE PhoneNumber = @PhoneNumber"
                     : "SELECT Password FROM Registration WHERE Email = @Email";
 
                 SqlCommand cmd = new SqlCommand(query, con);
 
-                if (!string.IsNullOrEmpty(registration.PhoneNumber))
-                    cmd.Parameters.AddWithValue("@PhoneNumber", registration.PhoneNumber);
+                if (!string.IsNullOrEmpty(credentials.PhoneNumber))
+                    cmd.Parameters.AddWithValue("@PhoneNumber", credentials.PhoneNumber);
                 else
-                    cmd.Parameters.AddWithValue("@Email", registration.Email);
+                    cmd.Parameters.AddWithValue("@Email", credentials.Email);
 
                 con.Open();
                 string storedHashedPassword = (string)cmd.ExecuteScalar();
 
-                if (storedHashedPassword != null && BCrypt.Net.BCrypt.Verify(registration.Password, storedHashedPassword))
+                if (storedHashedPassword != null && BCrypt.Net.BCrypt.Verify(credentials.Password, storedHashedPassword))
                 {
-                    var token = GenerateJwtToken(registration);
+                    var token = GenerateJwtToken(credentials);
                     return Ok(new { Token = token });
                 }
                 else
@@ -98,7 +98,7 @@ namespace MovieMunch.Registration
             }
         }
 
-        private string GenerateJwtToken(RegistrationModel user)
+        private string GenerateJwtToken(LoginModel user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
