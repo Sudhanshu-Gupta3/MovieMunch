@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MovieMunch.Registration.Models;
 using System.Data;
@@ -23,9 +22,12 @@ namespace MovieMunch.Registration
 
         [HttpPost]
         [Route("")]
-        public string registration(RegistrationModel registration)
+        public IActionResult Registration(RegistrationModel registration)
         {
             string connectionString = _configuration.GetConnectionString("mom");
+
+            // Hash the password before storing it
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(registration.Password);
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
@@ -36,7 +38,7 @@ namespace MovieMunch.Registration
                     cmd.CommandType = CommandType.StoredProcedure;
 
                     cmd.Parameters.AddWithValue("@UserName", registration.Username);
-                    cmd.Parameters.AddWithValue("@Password", registration.Password);
+                    cmd.Parameters.AddWithValue("@Password", hashedPassword); // Store the hashed password
                     cmd.Parameters.AddWithValue("@Email", registration.Email);
                     cmd.Parameters.AddWithValue("@PhoneNumber", registration.PhoneNumber);
                     cmd.Parameters.AddWithValue("@IsActive", registration.IsActive);
@@ -48,18 +50,18 @@ namespace MovieMunch.Registration
                         {
                             string result = reader["Result"].ToString();
                             con.Close();
-                            return result;
+                            return Ok(result);
                         }
                     }
                     catch (Exception ex)
                     {
                         con.Close();
-                        return "Failed to insert data";
+                        return StatusCode(500, "Failed to insert data");
                     }
                 }
 
                 con.Close();
-                return "Failed to insert data";
+                return StatusCode(500, "Failed to insert data");
             }
         }
 
@@ -70,24 +72,21 @@ namespace MovieMunch.Registration
             string connectionString = _configuration.GetConnectionString("mom");
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                string query = string.IsNullOrEmpty(registration.PhoneNumber)
-                    ? "SELECT * FROM Registration WHERE Email = @Email AND Password = @Password"
-                    : "SELECT * FROM Registration WHERE PhoneNumber = @PhoneNumber AND Password = @Password";
+                string query = !string.IsNullOrEmpty(registration.PhoneNumber)
+                    ? "SELECT Password FROM Registration WHERE PhoneNumber = @PhoneNumber"
+                    : "SELECT Password FROM Registration WHERE Email = @Email";
 
                 SqlCommand cmd = new SqlCommand(query, con);
 
-                if (string.IsNullOrEmpty(registration.PhoneNumber))
-                    cmd.Parameters.AddWithValue("@Email", registration.Email);
-                else
+                if (!string.IsNullOrEmpty(registration.PhoneNumber))
                     cmd.Parameters.AddWithValue("@PhoneNumber", registration.PhoneNumber);
+                else
+                    cmd.Parameters.AddWithValue("@Email", registration.Email);
 
-                cmd.Parameters.AddWithValue("@Password", registration.Password);
+                con.Open();
+                string storedHashedPassword = (string)cmd.ExecuteScalar();
 
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                if (dt.Rows.Count > 0)
+                if (storedHashedPassword != null && BCrypt.Net.BCrypt.Verify(registration.Password, storedHashedPassword))
                 {
                     var token = GenerateJwtToken(registration);
                     return Ok(new { Token = token });
