@@ -65,6 +65,49 @@ namespace MovieMunch.Registration
             }
         }
 
+        [HttpGet]
+        [Route("checkUserName")]
+        public IActionResult CheckUsernameExists(string username)
+        {
+            string connectionString = _configuration.GetConnectionString("mom");
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                con.Open();
+
+                string query = "SELECT COUNT(*) FROM Tblusermaster (nolock) WHERE UserName = @UserName";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserName", username);
+
+                    try
+                    {
+                        int count = (int)cmd.ExecuteScalar();
+                        con.Close();
+
+                        var response = new ValidateUsernameResponse
+                        {
+                            IsAvailable = count == 0,
+                            Message = count > 0 ? "Username already exists" : "Username is available"
+                        };
+
+                        return Ok(response);
+                    }
+                    catch (Exception ex)
+                    {
+                        con.Close();
+                        return StatusCode(500, new ValidateUsernameResponse
+                        {
+                            IsAvailable = false,
+                            Message = "Failed to check username"
+                        });
+                    }
+                }
+            }
+        }
+
+
         [HttpPost]
         [Route("login")]
         public IActionResult Login(LoginModel credentials)
@@ -73,8 +116,8 @@ namespace MovieMunch.Registration
             using (SqlConnection con = new SqlConnection(connectionString))
             {
                 string query = !string.IsNullOrEmpty(credentials.PhoneNumber)
-                    ? "SELECT Password FROM Registration WHERE PhoneNumber = @PhoneNumber"
-                    : "SELECT Password FROM Registration WHERE Email = @Email";
+                    ? "SELECT Password FROM Tblusermaster WHERE PhoneNumber = @PhoneNumber"
+                    : "SELECT Password FROM Tblusermaster WHERE Email = @Email";
 
                 SqlCommand cmd = new SqlCommand(query, con);
 
