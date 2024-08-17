@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MovieMunch.Context;
+using MovieMunch.Registration.CommandHandlers;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +49,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddMediatR(typeof(GetUserRegisterCommandHandler).Assembly);
+builder.Services.AddDbContext<MOMContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("mom")));
 
 var app = builder.Build();
 
